@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<link rel="stylesheet" type="text/css" href="jquery-ui.css">
+<style>
+button {
+	font-size: 20px;
+	height: 54px;
+	width: 81px;
+	text-align: center;
+	border-style: none;
+	border-radius: 0.5em 0.5em 0.5em /0.3em 0.3em;
+}
+button.used {
+	background-color: darkgrey;
+	color: gainsboro;
+}	
+button.empty {
+	background-color: cornflowerblue;	
+	color:white;
+}
+</style>
+
+<script type="text/javascript" src="jquery-1.7.1.js"></script>
+<script type="text/javascript" src="jquery-ui.js"></script>
+<script type="text/javascript">
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function in_used(number) {
+	if (s_seat[number] == '1') return 'used';
+	else return 'empty';
+}
+
+function refresh() {
+	localStorage.setItem("s_seat", s_seat);
+	localStorage.setItem("s_name", s_name);
+	localStorage.setItem("s_pass", s_pass);
+	localStorage.setItem("s_time", s_time);
+	location.reload();
+}
+
+function res(num) {
+	if (s_seat[num] == '0') {
+		var s_name_t = prompt('예약하시겠습니까? 성함을 입력해주세요');
+		if (s_name_t == null) { ; }
+		else if (s_name_t == "" || s_name_t.search(',') != -1) { alert("제대로 입력해주세요ㅠㅠ"); }
+		else if (s_name_t == "정균하트나연2") {
+			alert("초기화");
+			localStorage.clear();
+			location.reload();
+		}
+		else {
+			var s_pass_t = prompt('학번을 입력해주세요. 반납 시 본인인증을 위해 사용됩니다.');
+			if (s_pass_t == null) { ; }
+			else if (s_pass_t == "" || s_pass_t.search(',') != -1) { alert("제대로 입력해주세요"); }
+			else {
+				s_seat[num] = 1;
+				s_name[num] = s_name_t;
+				s_pass[num] = s_pass_t;
+				s_time[num] = Date.now() + 21600000;
+				confirm(s_name_t + " 님 6시간 동안 예약되었습니다. 즐거운 공부시간 되세요!");
+				refresh();
+			}
+		}
+	}
+	else {
+		var s_time_n = new Date(+s_time[num]);
+		var dialog = $('<p>현재 사용자: ' + s_name[num] + '<br/>~' + s_time_n.getHours() + ':' + s_time_n.getMinutes() + '</p>').dialog({
+			buttons: {
+				"반납": function() {
+					var resp = confirm('좌석을 반납하시겠습니까?');
+					if (resp) {
+						var s_pass_t = prompt('예약 시 입력하신 학번을 입력해주세요');
+						if (s_pass_t == s_pass[num]) {
+							s_seat[num] = 0;
+							s_name[num] = '';
+							s_pass[num] = '';
+							s_time[num] = 0;
+							alert('반납되었습니다.');
+							dialog.dialog('close');
+							refresh();
+						}
+						else { alert("학번이 틀렸습니다"); }
+					}
+				},
+				"연장": function() {
+					var resp = confirm('연장하시겠습니까?');
+					if (resp) {
+						s_time[num] = Date.now() + 21600000;
+						alert('현재 시간으로부터 6시간 연장되었습니다.');
+						dialog.dialog('close');
+						refresh();
+					}
+				},
+				"취소":  function() { dialog.dialog('close'); }
+			}
+		});
+	}
+}
+
+var seatinfo = '0001110011111000011100111110000000000000000111110011111001111100111110000000000000000111110011111001111100111110000000000000000011110011111100111100111111000000000000001111110011111111111100111111000000000000001111110011111111111100111111';
+
+s_seat = localStorage.getItem("s_seat");
+s_name = localStorage.getItem("s_name");
+s_pass = localStorage.getItem("s_pass");
+s_time = localStorage.getItem("s_time");
+if (s_seat == null) {
+	s_seat = [];
+	for (var i = 0; i < 238; ++i) s_seat.push('0');
+}
+else { s_seat = s_seat.split(','); }
+if (s_name == null) {
+	s_name = [];
+	for (var i = 0; i < 238; ++i) s_name.push('');
+}
+else { s_name = s_name.split(','); }
+if (s_pass == null) {
+	s_pass = [];
+	for (var i = 0; i < 238; ++i) s_pass.push('');
+}
+else { s_pass = s_pass.split(','); }
+if (s_time == null) {
+	s_time = [];
+	for (var i = 0; i < 238; ++i) s_time.push('0');
+}
+else { s_time = s_time.split(','); }
+
+var n = Date.now();
+for (var i = 0; i < 238; ++i) { if (s_time[i]<n) { s_seat[i] = '0'; } }
+
+</script>
+</head>
+
+<body>
+<h1>비슬빌리지 독서실 예약시스템</h1>
+
+<table>
+<tr>
+<td width = 300px>
+<p>시험기간 독서실의 사석화를 막기 위해 사용합니다.
+뾰로롱~
+생각이 안난다...
+</p>
+</td>
+<td width = 100px/>
+<td>
+<script type="text/javascript">
+document.write('<table><tr>');
+var j = 0;
+for (var i = 0; i < 238; ++i) {
+	if (i % 14 == 0) document.write('<tr>');
+	if (seatinfo[i] == '1') {
+		document.write('<td><button class=\'' + in_used(j) + '\' onclick=\'res(' + j + ')\'>' + (+j + 1) + '</button></td>');
+		j++;
+	}
+	else { document.write('<td></td>'); }
+	if (i % 14 == 13) document.write('</tr>');
+}
+document.write('</table>');
+
+sleep(60000).then(() => { refresh(); })
+</script>
+</td>
+</tr>
+</table>
+<p align='right'>2017 생활관학생자치위원회 제작</p>
+
+</body>
+</html>
